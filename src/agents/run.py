@@ -663,6 +663,9 @@ class Runner:
                     usage=usage,
                     referenceable_id=event.response.id,
                 )
+            else:
+                # check event on console, only show first 20 characters
+                print(f"event: {event.__class__.__name__} {str(event)[:20]}")
 
             streamed_result._event_queue.put_nowait(RawResponsesStreamEvent(data=event))
 

@@ -91,29 +91,37 @@ class ResearchManager:
             return None
 
     async def _write_report(self, query: str, search_results: list[str]) -> ReportData:
-        self.printer.update_item("writing", "Thinking about report...")
-        input = f"Original query: {query}\nSummarized search results: {search_results}"
-        result = Runner.run_streamed(
-            writer_agent,
-            input,
-        )
-        update_messages = [
-            "Thinking about report...",
-            "Planning report structure...",
-            "Writing outline...",
-            "Creating sections...",
-            "Cleaning up formatting...",
-            "Finalizing report...",
-            "Finishing report...",
-        ]
+        try:
+            self.printer.update_item("writing", "Thinking about report...")
+            input = f"Original query: {query}\nSummarized search results: {search_results}"
+            result = Runner.run_streamed(
+                writer_agent,
+                input,
+            )
+            update_messages = [
+                "Thinking about report...",
+                "Planning report structure...",
+                "Writing outline...",
+                "Creating sections...",
+                "Cleaning up formatting...",
+                "Finalizing report...",
+                "Finishing report...",
+            ]
 
-        last_update = time.time()
-        next_message = 0
-        async for _ in result.stream_events():
-            if time.time() - last_update > 5 and next_message < len(update_messages):
-                self.printer.update_item("writing", update_messages[next_message])
-                next_message += 1
-                last_update = time.time()
+            last_update = time.time()
+            next_message = 0
+            async for _ in result.stream_events():
+                if time.time() - last_update > 5 and next_message < len(update_messages):
+                    self.printer.update_item("writing", update_messages[next_message])
+                    next_message += 1
+                    last_update = time.time()
 
-        self.printer.mark_item_done("writing")
-        return result.final_output_as(ReportData)
+            self.printer.mark_item_done("writing")
+            out = result.final_output_as(ReportData)
+
+            return out
+        except Exception as e:
+            print(e)
+            return ReportData(
+                short_summary="Error", markdown_report="Error", follow_up_questions=["Error"]
+            )
